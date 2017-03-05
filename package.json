@@ -16,7 +16,7 @@
     "main": "./out/src/extension",
     "contributes": {
         "commands": [{
-            "command": "extension.sayHello",
+            "command": "extension.gitAutoCommit",
             "title": "Hello World"
         }]
     },
