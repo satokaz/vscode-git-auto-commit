@@ -1,89 +1,120 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import * as cp from 'child_process';
-import * as util from 'util';
 
-const options = {
-    cwd: `${vscode.workspace.rootPath}`
-};
-
-// nothing to commit, working tree clean
-export function check_nothing_to_commit() {
-    try{
-        let status = cp.execSync('git status | grep "nothing to commit, working tree clean"', options);
-        // console.log(status.toString());
-        if (status.toString().match('nothing to commit')) {
-            return true;
-        }
-    } catch(err){
-        console.log({
-            check_nothing_to_commit_stdout: err.stdout.toString(),
-            check_nothing_to_commit_stderr: err.stderr.toString(),
-        });
+export class CheckStatus {
+    private disposables: vscode.Disposable[] = [];
+    private options = {
+        cwd: `${vscode.workspace.rootPath}`,
+        LANG: 'en_US.UTF-8'
+    };
+    
+    constructor() {
     }
-    return false;
-}
 
-// no changes added to commit (use "git add" and/or "git commit -a")
-export function check_no_changes_added_to_commit() {
-    try{
-        let status = cp.execSync('git status | grep "no changes added to commit"', options);
-        // console.log(status.toString());
-        if (status.toString().match('no changes added to commit')) {
-            return true;
+    public parse_status() { 
+        {
+            // let check = new checkStatus;
+            let status = this.gitStatus();
+
+            // console.warn("check_nothing_to_commit() =", this.nothing_to_commit(status));
+            // console.warn("check_no_changes_added_to_commit() =", this.no_changes_added_to_commit(status));
+            // console.warn("check_changes_to_be_committed() =", this.changes_to_be_committed(status));
+            // console.warn("check_changes_not_staged() =", this.changes_not_staged(status));
+
+            let commitMsg: string;
+
+            if(this.changes_to_be_committed(status)) {
+
+                console.log(" -> check_changes_to_be_committed in parse_status");
+
+                // これ、Windows でどう実装すればいいの・・・
+                let msg = cp.execSync('git status | sed -n -e "/Changes/,/Changes not staged/p" | sed -n -e "/Changes/,/Untrack/p" | grep $"\t" | sed -e "s/^\t//g"', this.options);
+                // console.log('1 =',msg.toString());
+                
+                commitMsg = this.summarize(msg.toString());
+                // console.log(commitMsg);
+            } else if(this.changes_not_staged(status)) {
+
+                console.log("-> check_changes_not_staged in parse_status");
+                // これ、Windows でどう実装すればいいの・・・
+                let msg = cp.execSync('(git status | sed -n -e "/Changes not staged/,/Untrack/p" | grep $"\t" | sed -e "s/^\t//g")', this.options);
+
+                // console.log('2 =', msg.toString());
+                commitMsg = this.summarize(msg.toString());
+                // console.log(commitMsg);
+            }
+            commitMsg = commitMsg; // + '\n\n' + this.gitDiffStat();
+            console.log('commitmsg =',`"${commitMsg}"`);
+
+            return commitMsg;
         }
-    } catch(err){
-        console.log({
-            check_no_changes_added_to_commit_stdout: err.stdout.toString(),
-            check_no_changes_added_to_commit_stderr: err.stderr.toString(),
-        });
     }
-    return false;
-}
 
-// Example:
-// Changes to be committed:
-//   (use "git reset HEAD <file>..." to unstage)
-//
-//         new file:   new.md
-export function check_changes_to_be_committed() {
-    try{
-        // let status = execSync('git status | grep "Changes to be committed"', { cwd: folderPath });
-        let status = cp.execSync('git status | grep "Changes to be committed"', options);
-        // console.log(status.toString());
-        if (status.toString().match('Changes to be committed.')) {
-            return true;
-        }
-    } catch(err){
-        console.log({
-            check_changes_to_be_committed_stdout: err.stdout.toString(),
-            check_changes_to_be_committed_stderr: err.stderr.toString(),
-        });
+    public summarize(msg) {
+        let line: string;
+        return msg.replace(/:  /ig, ":")
+        .replace(/modified:/ig, "update")
+        .replace(/deleted:/ig, "delete");
     }
-    return false;
-}
 
-// Example:
-// Changes not staged for commit:
-//   (use "git add <file>..." to update what will be committed)
-//   (use "git checkout -- <file>..." to discard changes in working directory)
-//
-//         modified:   .gitignore
-export function check_changes_not_staged() {
-    try{
-        // let status = execSync('git status | grep "Changes not staged for commit"', { cwd: folderPath });
-        let status = cp.execSync('git status | grep "Changes not staged for commit"', options);
-        // console.log(status.toString());
-        if (status.toString().match('Changes not staged for commit.')) {
-            return true;
-        }
-    } catch(err) {
+    public gitStatus() {
+        try {
+            return cp.execSync('git status', this.options).toString();
+        } catch(err) {
             console.log({
-            check_changes_not_staged_stdout: err.stdout.toString(),
-            check_changes_not_staged_stderr: err.stderr.toString(),
-        });
+                gitStatus_stdout: err.stdout.toString(),
+                gitStatus_stderr: err.stderr.toString()
+            });
+        }
     }
-    return false;
+
+    public gitDiffStat() {
+        try {
+            return cp.execSync('git diff --stat --no-color', this.options).toString();
+        } catch(err) {
+            console.log({
+                gitStatus_stdout: err.stdout.toString(),
+                gitStatus_stderr: err.stderr.toString()
+            });
+        }
+    }
+
+    // nothing to commit, working tree clean
+
+    public nothing_to_commit(status) {
+        return (status.match('nothing to commit')) ? true : false;
+    }
+
+    // no changes added to commit (use "git add" and/or "git commit -a")
+
+    public no_changes_added_to_commit(status) {
+        return (status.match('no changes added to commit')) ? true : false;
+    }
+
+    // Example:
+    // Changes not staged for commit:
+    //   (use "git add <file>..." to update what will be committed)
+    //   (use "git checkout -- <file>..." to discard changes in working directory)
+    //
+    //         modified:   .gitignore
+
+    public changes_not_staged(status) {
+        return (status.match('Changes not staged for commit.')) ? true : false;
+    }
+
+    // Example:
+    // Changes to be committed:
+    //   (use "git reset HEAD <file>..." to unstage)
+    //
+    //         new file:   new.md
+
+    public changes_to_be_committed(status) {
+        return (status.match('Changes to be committed.')) ? true : false;
+    }
+
+	dispose(): void {
+		this.disposables.forEach(d => d.dispose());
+	}
 }

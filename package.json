@@ -1,36 +1,59 @@
 {
-    "name": "vscode-git-auto-commit",
-    "displayName": "vscode-git-auto-commit",
-    "description": "",
-    "version": "0.0.1",
-    "publisher": "satokaz",
-    "engines": {
-        "vscode": "^1.10.0"
-    },
-    "categories": [
-        "Other"
+  "name": "vscode-git-auto-commit",
+  "displayName": "vscode-git-auto-commit",
+  "description": "",
+  "version": "0.0.1",
+  "publisher": "satokaz",
+  "engines": {
+    "vscode": "^1.10.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.gitAutoCommit",
+        "title": "git Auto Commit"
+      }
     ],
-    "activationEvents": [
-        "*"
-    ],
-    "main": "./out/src/extension",
-    "contributes": {
-        "commands": [{
-            "command": "extension.gitAutoCommit",
-            "title": "Hello World"
-        }]
-    },
-    "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "node ./node_modules/vscode/bin/test"
-    },
-    "devDependencies": {
-        "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
-        "mocha": "^2.3.3",
-        "@types/node": "^6.0.40",
-        "@types/mocha": "^2.2.32"
+    "configuration": {
+      "type": "object",
+      "title": "Git auto commit configuration",
+      "properties": {
+        "git-autoCommit.enable": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Automate commit. Be sure to set it to the workspace. Please do not use it for global setting."
+        },
+        "git-autoCommit.autostage": {
+          "type": "boolean",
+          "default": "false",
+          "description": "Automate staging"
+        },
+        "git-autoCommit.interval": {
+          "type": "number",
+          "default": "1800000",
+          "description": "Auto commit interval (default: 30 min)"
+        }
+      }
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "test": "node ./node_modules/vscode/bin/test"
+  },
+  "devDependencies": {
+    "typescript": "^2.2.1",
+    "vscode": "^1.1.0",
+    "mocha": "^3.2.0",
+    "@types/node": "^7.0.8",
+    "@types/mocha": "^2.2.39"
+  }
 }

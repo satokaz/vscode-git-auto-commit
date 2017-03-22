@@ -2,96 +2,76 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as cp from 'child_process';
-import * as util from 'util';
-
-import { autoCommit } from './gitAutoCommitProvider'
-import { parse_status } from './gitStatusParseProvider';
-import {
-    check_nothing_to_commit,
-    check_no_changes_added_to_commit,
-    check_changes_to_be_committed,
-    check_changes_not_staged
-} from './gitStatusCheckProvider';
-
+import { AutoCommit } from './gitAutoCommitProvider'
+import { CheckStatus } from './gitStatusCheckProvider';
+import { CheckSettings } from './checkSettings'
 
 const options = {
     cwd: `${vscode.workspace.rootPath}`
 };
 
-if (vscode.workspace.getConfiguration('git-autoCommit')['enable'] === true) {
- console.log("git-autoCommit の設定があります");
-} else {
- console.log("git-autoCommit の設定がないですよ");
-}
-
-// launch.json configuration
-const config = vscode.workspace.getConfiguration('git-autoCommit');
- // retrieve values
-const values = config.get('enable');
-
-console.log(gitStatus());
 
 export function activate(context: vscode.ExtensionContext) {
-
     console.log('Congratulations, your extension "vscode-git-auto-commit" is now active!');
 
-    console.log("folderPath = ", options.cwd);
+    const config = vscode.workspace.getConfiguration('git-autoCommit');
+
+let msg = cp.execSync('git status', options);
+console.log(String(msg).split('\n'));
+
+    new CheckSettings();
+
+    if (options.cwd !== 'undefined') {
+        let check = new CheckStatus();
+        new AutoCommit();
+    
+        // let ac = new AutoCommit();
+        // ac;
+
+        let outputChannel = vscode.window.createOutputChannel('Git auto commit');
+        outputChannel.show(true);
+
+        function output() {
+                outputChannel.appendLine(`\n[${(new Date().toLocaleTimeString())} - Start]`);
+                outputChannel.append(check.gitStatus());
+                outputChannel.appendLine(`[${(new Date().toLocaleTimeString())} - End]`);
+
+                outputChannel.appendLine(`\n[${(new Date().toLocaleTimeString())} - Start]`);
+                outputChannel.append(check.parse_status());
+                outputChannel.appendLine(`[${(new Date().toLocaleTimeString())} - End]`);
+                setTimeout(() => {output()}, 15000);
+        }
+        output();
+    }
 
     let disposable = vscode.commands.registerCommand('extension.gitAutoCommit', () => {
-
-        // setInterpreter();
-    // vscode.workspace.openTextDocument(workspaceSettingsPath()).then(doc => vscode.window.showTextDocument(doc));
-
-        // console.log(parse_status());
-        autoCommit();
+        // autoCommit();
     });
 
     context.subscriptions.push(disposable);
 }
+
 export function deactivate() {
 }
 
 
 
 
-//https://github.com/DonJayamanne/pythonVSCode/pull/258
-function workspaceSettingsPath() {
-     return path.join(vscode.workspace.rootPath, '.vscode', 'settings.json')
-}
 
-function setInterpreter() {
-    // For now the user has to manually edit the workspace settings to change the
-    // pythonPath -> First check they have .vscode/settings.json
-    let settingsPath: string
-    try {
-        settingsPath = workspaceSettingsPath()
-    } catch (e) {
-        // We aren't even in a workspace
-        vscode.window.showInformationMessage("The interpreter can only be set within a workspace (open a folder)")
-        return
-    }
-    vscode.workspace.openTextDocument(settingsPath)
-        .then(doc => {
-                // Great, workspace file exists. Present it for copy/pasting into...
-                vscode.window.showTextDocument(doc);
-                // ...and offer the quick-pick suggestions.
-            },
-            () => {
-                // The user doesn't have any workspace settings!
-                // Prompt them to create one first
-                vscode.window.showInformationMessage("No workspace settings file. First, run 'Preferences: Open Workspace Settings' to create one." )
-                })
-}
+    // 設定項目チェック - ユーザー設定には設定させない。設定されていたら、Infomation で警告する　
+    // if (config.inspect<boolean>('enable').globalValue === true || config.inspect<boolean>('autostage').globalValue === true) {
+    //     vscode.window.showInformationMessage('ユーザー設定に git-autoCommit 設定しないでください。確認しウインドウの再読み込みを行なってください');
+    //     return;
+    // }
 
-
-function gitStatus() {
-    try {
-        return cp.execSync('git status', options).toString();
-    } catch(err) {
-        console.log({
-            commit_stdout: err.stdout.toString(),
-            commit_stderr: err.stderr.toString(),
-        });
-    }
-}
+    // 設定項目チェック - ユーザー設定には設定させない
+    // if ((config.inspect<string>('enable').defaultValue === "false")
+    //     && (config.inspect('enable').globalValue === undefined)
+    //     && (config.inspect<boolean>('enable').workspaceValue === true)) {
+    //     console.log('autocommit を動かす権利があります');
+    //     // autoCommit();
+    // } else {
+    //     return console.log('残念ながら autocommit は動かせません');
+    // }
