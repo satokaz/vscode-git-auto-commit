@@ -6,29 +6,27 @@ import * as fs from 'fs';
 import * as cp from 'child_process';
 import { AutoCommit } from './gitAutoCommitProvider'
 import { CheckStatus } from './gitStatusCheckProvider';
-import { CheckSettings } from './checkSettings'
+import { CheckSettings } from './gitCheckSettings'
 
 const options = {
     cwd: `${vscode.workspace.rootPath}`
 };
 
-
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "vscode-git-auto-commit" is now active!');
-
     const config = vscode.workspace.getConfiguration('git-autoCommit');
 
-let msg = cp.execSync('git status', options);
-console.log(String(msg).split('\n'));
+    // let msg = cp.execSync('git status', options);
+    // console.log(String(msg).split('\n'));
 
-    new CheckSettings();
 
     if (options.cwd !== 'undefined') {
+        let cks = new CheckSettings();
         let check = new CheckStatus();
-        new AutoCommit();
     
-        // let ac = new AutoCommit();
-        // ac;
+        if(cks.userSetting()){
+            new AutoCommit();
+        };
 
         let outputChannel = vscode.window.createOutputChannel('Git auto commit');
         outputChannel.show(true);
@@ -55,23 +53,3 @@ console.log(String(msg).split('\n'));
 
 export function deactivate() {
 }
-
-
-
-
-
-    // 設定項目チェック - ユーザー設定には設定させない。設定されていたら、Infomation で警告する　
-    // if (config.inspect<boolean>('enable').globalValue === true || config.inspect<boolean>('autostage').globalValue === true) {
-    //     vscode.window.showInformationMessage('ユーザー設定に git-autoCommit 設定しないでください。確認しウインドウの再読み込みを行なってください');
-    //     return;
-    // }
-
-    // 設定項目チェック - ユーザー設定には設定させない
-    // if ((config.inspect<string>('enable').defaultValue === "false")
-    //     && (config.inspect('enable').globalValue === undefined)
-    //     && (config.inspect<boolean>('enable').workspaceValue === true)) {
-    //     console.log('autocommit を動かす権利があります');
-    //     // autoCommit();
-    // } else {
-    //     return console.log('残念ながら autocommit は動かせません');
-    // }

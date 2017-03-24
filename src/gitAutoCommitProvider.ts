@@ -9,7 +9,7 @@ import { CheckStatus } from './gitStatusCheckProvider';
  * AutoCommit
  */
 export class AutoCommit {
-    private static Period = 15000; //3 * 60 * 1000 /* three minutes */;
+    private static Period = 3 * 60 * 1000; /* three minutes */
     private disposables: vscode.Disposable[] = [];
 	private timer: NodeJS.Timer;
     private options = {
@@ -52,20 +52,6 @@ export class AutoCommit {
         this.timer = undefined;
 
  	}
-	// private async status(): Promise<void> {
-	// 	try {
-    //         // test
-	// 		await new Promise( (resolve, reject) => { 
-    //                 console.warn(new Date().toLocaleTimeString());
-    //                 console.warn(cp.execSync('git status', this.options).toString()); 
-    //                 });
-	// 	} catch (err) {
-    //         console.log('ログ', {
-    //             status_stdout: err.stdout.toString(),
-    //             status_stderr: err.stderr.toString()
-    //         });
-	// 	}
-	// }
 
 	private async stage(): Promise<void> {
         let check = new CheckStatus;
@@ -98,44 +84,3 @@ export class AutoCommit {
 		this.disposables.forEach(d => d.dispose());
 	}
 }
-
-
-// const options = {
-//     cwd: `${vscode.workspace.rootPath}`,
-//     LANG: 'en_US.UTF-8'
-// };
-
-// export function autoCommit() {
-
-//     const config = vscode.workspace.getConfiguration('git-autoCommit');
-//     let values = (config.get('interval') === undefined) ? Number(1800000) : +config.get('interval'); // +:Type conversion from string to number
-//     // launch.json configuration
-//     // const config = vscode.workspace.getConfiguration('git-autoCommit');
-//     console.log('values =', values);
-
-//     let check = new checkStatus;
-//     let autostage = true;
-//     let status = gitStatus();
-
-//     console.time('timer');
-//         console.log('msg in autoCommit() =', parse_status());
-//     console.timeEnd('timer');
-
-//     try {
-//         if (check.nothing_to_commit(status) === !true ) {
-//             if(check.no_changes_added_to_commit(status) !== true) {
-//                 console.log('git commit -m ' + parse_status());
-//                 // cp.execSync('git commit -m ' + '"' + parse_status() + '"', options);
-//             } else if (config.get('autostage')) {
-//                 console.log('git commit -am ' + parse_status());
-//                 // cp.execSync('git commit -am ' + '"' + parse_status() + '"', options);
-//             }
-//         }
-//     } catch(err) {
-//         console.log({
-//             commit_stdout: err.stdout.toString(),
-//             commit_stderr: err.stderr.toString(),
-//         });
-//     }
-//     // setTimeout(autoCommit, values);
-// }

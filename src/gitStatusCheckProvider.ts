@@ -43,9 +43,8 @@ export class CheckStatus {
 
                 // console.log('2 =', msg.toString());
                 commitMsg = this.summarize(msg.toString());
-                // console.log(commitMsg);
             }
-            commitMsg = commitMsg; // + '\n\n' + this.gitDiffStat();
+            // commitMsg = commitMsg; // + '\n\n' + this.gitDiffStat();
             console.log('commitmsg =',`"${commitMsg}"`);
 
             return commitMsg;
@@ -70,25 +69,12 @@ export class CheckStatus {
         }
     }
 
-    public gitDiffStat() {
-        try {
-            return cp.execSync('git diff --stat --no-color', this.options).toString();
-        } catch(err) {
-            console.log({
-                gitStatus_stdout: err.stdout.toString(),
-                gitStatus_stderr: err.stderr.toString()
-            });
-        }
-    }
-
     // nothing to commit, working tree clean
-
     public nothing_to_commit(status) {
         return (status.match('nothing to commit')) ? true : false;
     }
 
     // no changes added to commit (use "git add" and/or "git commit -a")
-
     public no_changes_added_to_commit(status) {
         return (status.match('no changes added to commit')) ? true : false;
     }
@@ -99,7 +85,6 @@ export class CheckStatus {
     //   (use "git checkout -- <file>..." to discard changes in working directory)
     //
     //         modified:   .gitignore
-
     public changes_not_staged(status) {
         return (status.match('Changes not staged for commit.')) ? true : false;
     }
@@ -109,7 +94,6 @@ export class CheckStatus {
     //   (use "git reset HEAD <file>..." to unstage)
     //
     //         new file:   new.md
-
     public changes_to_be_committed(status) {
         return (status.match('Changes to be committed.')) ? true : false;
     }
@@ -117,4 +101,15 @@ export class CheckStatus {
 	dispose(): void {
 		this.disposables.forEach(d => d.dispose());
 	}
+
+    // public gitDiffStat() {
+    //     try {
+    //         return cp.execSync('git diff --stat --no-color', this.options).toString();
+    //     } catch(err) {
+    //         console.log({
+    //             gitStatus_stdout: err.stdout.toString(),
+    //             gitStatus_stderr: err.stderr.toString()
+    //         });
+    //     }
+    // }
 }
